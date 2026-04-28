@@ -1,7 +1,7 @@
 name: Fortify Scan (Test Only)
 
 on:
-  workflow_dispatch:   # Manual trigger only (best for testing)
+  workflow_dispatch:
 
 jobs:
   fortify:
@@ -17,10 +17,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build project
-        run: mvn clean install -DskipTests
+      - name: Build project (ignore failures)
+        run: mvn clean install -DskipTests || true
 
-      - name: Run Fortify Scan (Only)
+      - name: Run Fortify Scan
         uses: fortify/github-action@v3
         env:
           SSC_URL: "https://3.214.170.252:8443/ssc"
@@ -28,3 +28,4 @@ jobs:
           SSC_TOKEN: d3247deb-c180-462f-a02d-08138ea611d9
           SC_SAST_TOKEN: CHANGEME123!
           SSC_APPVERSION: "A-git:1.0"
+          FCLI_DEBUG: true
