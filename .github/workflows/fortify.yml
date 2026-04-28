@@ -74,32 +74,35 @@ jobs:
       # TODO: Update ENV variables for your application and create the necessary GitHub Secrets.  Helpful hints:
       #   Credentials and release ID should be obtained from your FoD tenant (either Personal Access Token or API Key can be used).
       #   Automated Audit preference should be configured for the release's Static Scan Settings in the Fortify on Demand portal.
-      - name: Download Fortify on Demand Universal CI Tool
-        uses: fortify/gha-setup-fod-uploader@6e6bb8a33cb476e240929fa8ebc739ff110e7433
-      - name: Perform SAST Scan
-        run: java -jar $FOD_UPLOAD_JAR -z package.zip -aurl $FOD_API_URL -purl $FOD_URL -rid "$FOD_RELEASE_ID" -tc "$FOD_TENANT" -uc "$FOD_USER" "$FOD_PAT" $FOD_UPLOADER_OPTS -n "$FOD_UPLOADER_NOTES"
+name: Fortify SSC Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fortify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build project
+        run: mvn clean install -DskipTests
+
+      - name: Run Fortify Scan
+        uses: fortify/github-action@v3
         env:
-          FOD_URL: "https://ams.fortify.com/"
-          FOD_API_URL: "https://api.ams.fortify.com/"
-          FOD_TENANT: ${{ secrets.FOD_TENANT }}
-          FOD_USER: ${{ secrets.FOD_USER }}
-          FOD_PAT: ${{ secrets.FOD_PAT }}
-          FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
-          FOD_UPLOADER_OPTS: "-ep 2 -pp 0 -I 1 -apf"
-          FOD_UPLOADER_NOTES: 'Triggered by GitHub Actions (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
-
-      # Once scan completes, pull SAST issues from Fortify on Demand and generate SARIF output.
-      - name: Export results to GitHub-optimized SARIF
-        uses: fortify/gha-export-vulnerabilities@fcb374411cff9809028c911dabb8b57dbdae623b
-        with:
-          fod_base_url: "https://ams.fortify.com/"
-          fod_tenant: ${{ secrets.FOD_TENANT }}
-          fod_user: ${{ secrets.FOD_USER }}
-          fod_password: ${{ secrets.FOD_PAT }}
-          fod_release_id: ${{ secrets.FOD_RELEASE_ID }}
-
-      # Import Fortify on Demand results to GitHub Security Code Scanning
-      - name: Import Results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: ./gh-fortify-sast.sarif
+          SSC_URL: https://3.214.170.252:8443/ssc
+          SSC_TOKEN: d3247deb-c180-462f-a02d-08138ea611d9
+          SC_SAST_TOKEN: CHANGEME123!
+          SSC_APPVERSION: A-git:1.0
