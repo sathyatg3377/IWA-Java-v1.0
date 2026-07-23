@@ -1,0 +1,90 @@
+name: Fortify FoD Scan
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+
+  Fortify-Scan:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Example: Java
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Run Fortify FoD Scan
+        uses: fortify/github-action@v3
+
+        with:
+          sast-scan: true
+          debricked-sca-scan: false
+
+        env:
+
+          ##############################
+          ## FoD Authentication
+          ##############################
+
+          FOD_URL: https://ams.fortify.com
+
+          FOD_USER: ${{ secrets.FOD_USER }}
+          FOD_PASSWORD: ${{ secrets.FOD_PAT }}
+          FOD_TENANT: ${{ secrets.FOD_TENANT }}
+
+          ##############################
+          ## Application / Release
+          ##############################
+
+          FOD_RELEASE: DemoApplication:Main
+
+          ##############################
+          ## Package options
+          ##############################
+
+          PACKAGE_EXTRA_OPTS: "-bt mvn"
+
+          ##############################
+          ## Wait for completion
+          ##############################
+
+          DO_WAIT: true
+
+          ##############################
+          ## Upload SARIF to GitHub
+          ##############################
+
+          DO_EXPORT: true
+
+          ##############################
+          ## Job Summary
+          ##############################
+
+          DO_JOB_SUMMARY: true
+
+          ##############################
+          ## Policy Check
+          ##############################
+
+          DO_POLICY_CHECK: true
