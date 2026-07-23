@@ -1,31 +1,90 @@
-name: Fortify Scan (Test Only)
+name: Fortify FoD Scan
 
 on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
   workflow_dispatch:
 
 jobs:
-  fortify:
+
+  Fortify-Scan:
+
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
     steps:
-      - name: Checkout source
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Example: Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
-      - name: Build project (ignore failures)
-        run: mvn clean install -DskipTests || true
-
-      - name: Run Fortify Scan
+      - name: Run Fortify FoD Scan
         uses: fortify/github-action@v3
+
+        with:
+          sast-scan: true
+          debricked-sca-scan: false
+
         env:
-          SSC_URL: "https://3.214.170.252:8443/ssc"
-          SC_CONTROLLER_URL: "https://3.214.170.252:10443/scancentral-ctrl"
-          SSC_TOKEN: d3247deb-c180-462f-a02d-08138ea611d9
-          SC_SAST_TOKEN: CHANGEME123!
-          SSC_APPVERSION: "A-git:1.0"
-          FCLI_DEBUG: true
+
+          ##############################
+          ## FoD Authentication
+          ##############################
+
+          FOD_URL: https://ams.fortify.com
+
+          FOD_USER: sathya
+          FOD_PASSWORD: Geetha@191290
+          FOD_TENANT: FranklinBank24
+
+          ##############################
+          ## Application / Release
+          ##############################
+
+          FOD_RELEASE: DemoApplication:Main
+
+          ##############################
+          ## Package options
+          ##############################
+
+          PACKAGE_EXTRA_OPTS: "-bt mvn"
+
+          ##############################
+          ## Wait for completion
+          ##############################
+
+          DO_WAIT: true
+
+          ##############################
+          ## Upload SARIF to GitHub
+          ##############################
+
+          DO_EXPORT: true
+
+          ##############################
+          ## Job Summary
+          ##############################
+
+          DO_JOB_SUMMARY: true
+
+          ##############################
+          ## Policy Check
+          ##############################
+
+          DO_POLICY_CHECK: true
